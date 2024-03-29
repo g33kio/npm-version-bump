@@ -1,6 +1,7 @@
 const core = require('@actions/core')
 const { execSync } = require('child_process')
-const { writeFileSync } = require('fs')
+const { writeFileSync, readFileSync } = require('fs')
+const { resolve  } = require('path')
 
 function checkCommitMessagesForKeyword (keywordList, commits, currentValue = 0, firstOnly = false) {
     let bumped = false
@@ -115,7 +116,7 @@ function run () {
     core.notice('Checking git tag settings.')
     tagVersion(newVersion.tagVersion)
 
-    const pkg = require('package.json')
+    const pkg = JSON.parse(readFileSync(resolve('package.json'), { encoding: 'utf8' }))
     pkg.version = newVersion.packageVersion
     writeFileSync('package.json', JSON.stringify(pkg))
     execSync('npm ci')
