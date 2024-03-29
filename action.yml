@@ -1,4 +1,4 @@
-name: 'Npm Version Bump'
+name: 'G33KIO Npm Version Bump'
 description: 'Bumps the npm package version based on commit message and current version from package repository.'
 inputs:
   tag-version:
