@@ -88,7 +88,7 @@ A comma separated list of keywords that can be used in commit messages to bump t
 ```
 
 ### minor-keywords
-#### Default: 'minor,+++'
+#### Default: 'minor,++'
 A comma separated list of keywords that can be used in commit messages to bump the minor version number.
 ```yaml
       - name: Bump Package Version & Publish
@@ -98,7 +98,7 @@ A comma separated list of keywords that can be used in commit messages to bump t
 ```
 
 ### patch-keywords
-#### Default: 'patch,+++'
+#### Default: 'patch,+'
 A comma separated list of keywords that can be used in commit messages to bump the patch version number.
 ```yaml
       - name: Bump Package Version & Publish
@@ -178,8 +178,8 @@ jobs:
           tag-version: 'true'
           tag-prefix: 'pre-release'
           major-keywords: 'major,+++'
-          minor-keywords: 'minor,+++'
-          patch-keywords: 'patch,+++'
+          minor-keywords: 'minor,++'
+          patch-keywords: 'patch,+'
           pre-release: 'pre-release'
 ```
 ## Test/Stage/QA Branch
@@ -209,8 +209,8 @@ jobs:
           tag-version: 'true'
           tag-prefix: 'beta'
           major-keywords: 'major,+++'
-          minor-keywords: 'minor,+++'
-          patch-keywords: 'patch,+++'
+          minor-keywords: 'minor,++'
+          patch-keywords: 'patch,+'
           pre-release: 'beta'
 ```
 ### Production Branch
@@ -240,6 +240,6 @@ jobs:
           tag-version: 'true'
           tag-prefix: 'v'
           major-keywords: 'major,+++'
-          minor-keywords: 'minor,+++'
-          patch-keywords: 'patch,+++'
+          minor-keywords: 'minor,++'
+          patch-keywords: 'patch,+'
 ```
