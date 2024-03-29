@@ -3,6 +3,28 @@ const { execSync } = require('child_process')
 const { writeFileSync, readFileSync } = require('fs')
 const { resolve  } = require('path')
 
+function getCurrentVersion (packageName){
+    // get complete list of versions
+    const versions =  JSON.parse(execSync(`npm view ${packageName} versions --json`, { encoding: 'utf8' }))
+
+    // sort by version number and ignore all pre-release versions
+    const sorted = versions
+        .filter(a => a.split('.').length === 3)
+        .map( a => a.split('.')
+            .map( n => +n+100000 )
+            .join('.') )
+        .sort()
+        .map( a => a.split('.')
+            .map( n => +n-100000 )
+            .join('.') )
+
+    // return the least public version
+    // TODO might need to figure out a different way to handle this with pre-release
+    return sorted.length
+        ? sorted[sorted.length - 1]
+        : '0.0.0'
+}
+
 function checkCommitMessagesForKeyword (keywordList, commits, currentValue = 0, firstOnly = false) {
     let bumped = false
     return keywordList.reduce((newValue, kw) => {
@@ -18,13 +40,13 @@ function checkCommitMessagesForKeyword (keywordList, commits, currentValue = 0, 
 }
 
 function bumpVersion (commits, packageName) {
-    const currentVersion = execSync(`npm view ${packageName} version`, { encoding: 'utf8' })
     const majorKeywords = core.getInput('major-keywords').split(',')
     const minorKeywords = core.getInput('minor-keywords').split(',')
     const patchKeywords = core.getInput('patch-keywords').split(',')
     const firstOnly = core.getBooleanInput('bump-first-only')
     const resetLower = core.getBooleanInput('reset-lower')
     const preRelease = core.getInput('pre-release')
+    const currentVersion = getCurrentVersion(packageName)
 
     let newVersion = {
         packageVersion: '',
