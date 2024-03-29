@@ -1,0 +1,47 @@
+name: 'Npm Version Bump'
+description: 'Bumps the npm package version based on commit message and current version from package repository.'
+inputs:
+  tag-version:
+    description: 'Determines if this last commit should be tagged with the npm version.'
+    default: 'false'
+    required: false
+  tag-prefix:
+    description: 'Version tag prefix, only used for git tagging and will not be added to package.json version.'
+    default: 'v'
+    required: false
+  major-keywords:
+    description: 'Keywords in the commit message that will bump the major version.'
+    default: 'major,+++'
+    required: false
+  minor-keywords:
+    description: 'Keywords in the commit message that will bump the minor version.'
+    default: 'minor,++'
+    required: false
+  patch-keywords:
+    description: 'Keywords in the commit message that will bump the patch version.'
+    default: 'patch,+'
+    required: false
+  bump-first-only:
+    description: 'If this is true, then only major, minor, or patch will be updated based on which ever keyword is found first.'
+    default: 'false'
+    required: false
+  reset-lower:
+    description: 'If this is true, then the lower version will be set to 0 when bump happens. Major will set minor and patch to 0, and Minor will reset patch to 0.'
+    default: 'false'
+    required: false
+  pre-release:
+    description: 'Sets the version to bump the pre-release tag version. This will bump the major, minor, or patch and add this value to the end of the version.'
+    default: ''
+    required: false
+  working-dir:
+    description: 'Sets the working directory if build needs to be done in a sub folder.'
+    default: ''
+    required: false
+outputs:
+  newVersion:
+    description: 'The new version of the npm package.'
+  versionTag:
+    description: 'The new git version tag. Will be empty if tag-version is false.'
+runs:
+  using: 'node20'
+  main: 'index.js'
