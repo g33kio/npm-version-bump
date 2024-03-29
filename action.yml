@@ -1,5 +1,8 @@
 name: 'G33KIO Npm Version Bump'
 description: 'Bumps the npm package version based on commit message and current version from package repository.'
+branding:
+  icon: upload-cloud
+  color: black
 inputs:
   tag-version:
     description: 'Determines if this last commit should be tagged with the npm version.'
