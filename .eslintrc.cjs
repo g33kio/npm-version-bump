@@ -7,6 +7,7 @@ module.exports = {
     node: true,
     browser: false,
   },
+  ignorePatterns: ['node_modules/**'],
   extends: [
     'eslint:recommended',
   ],
