@@ -3,26 +3,55 @@ const { execSync } = require('child_process')
 const { writeFileSync, readFileSync } = require('fs')
 const { resolve  } = require('path')
 
-function getCurrentVersion (packageName){
+function getCurrentVersion (packageName, preRelease){
     // get complete list of versions
-    const versions =  JSON.parse(execSync(`npm view ${packageName} versions --json`, { encoding: 'utf8' }))
+    let versions =  JSON.parse(execSync(`npm view ${packageName} versions --json`, { encoding: 'utf8' }))
+    const preReleaseFormatted = preRelease.replace(/[^A-z]/g, '')
 
-    // sort by version number and ignore all pre-release versions
+    // if pre release we need to get only those versions
+    if (preRelease){
+        versions = versions
+            .filter(v => v.includes(preReleaseFormatted))
+            .map(v => v.replace(/-/g, '.')
+                .replace(preReleaseFormatted, '')
+                .replace('..', '.'))
+    } else {
+        versions = versions
+            .filter(v => v.split('.').length === 3)
+    }
+
+    // sort by version number
     const sorted = versions
-        .filter(a => a.split('.').length === 3)
-        .map( a => a.split('.')
-            .map( n => +n+100000 )
-            .join('.') )
+        .map(v => v.split('.')
+            .map(n => +n+100000)
+            .join('.'))
         .sort()
-        .map( a => a.split('.')
-            .map( n => +n-100000 )
-            .join('.') )
-
-    // return the least public version
-    // TODO might need to figure out a different way to handle this with pre-release
-    return sorted.length
+        .map(v => v.split('.')
+            .map(n => +n-100000)
+            .join('.'))
+    const selectedVersion = sorted.length
         ? sorted[sorted.length - 1]
         : '0.0.0'
+
+
+    if (preRelease){
+        const versionParts = selectedVersion.split('.').map(v => +v)
+
+        if (versionParts.length !== 4){
+            do {
+                versionParts.push(0)
+            } while (versionParts.length !== 4)
+        } else {
+            versionParts[3] = versionParts[3] + 1
+        }
+
+        versionParts.splice(3, 0, preRelease)
+        return versionParts.join('.')
+            .replace('..', '') // in case preRelease has decimals
+            .replace('.-', '-') // in case preRelease starts with -
+            .replace('-.', '-') // in case preRelease end with -
+    }
+    return selectedVersion
 }
 
 function checkCommitMessagesForKeyword (keywordList, commits, currentValue = 0, firstOnly = false) {
@@ -46,7 +75,7 @@ function bumpVersion (commits, packageName) {
     const firstOnly = core.getBooleanInput('bump-first-only')
     const resetLower = core.getBooleanInput('reset-lower')
     const preRelease = core.getInput('pre-release')
-    const currentVersion = getCurrentVersion(packageName)
+    const currentVersion = getCurrentVersion(packageName, preRelease)
 
     let newVersion = {
         packageVersion: '',
