@@ -161,8 +161,7 @@ bumped then Patch will be set to 0.
 #### Default: ''
 
 When this has a value, it will be added to the end of the npm package version. This is useful for creating pre-release,
-or alpha versions. By default the decimal is used as a separator. You can use hyphen by adding a one to the beginning or
-end of the preRelease value. So using ```-alpha``` would result in a version 0.0.0-alpha.0
+or alpha versions.
 
 ```yaml
       - name: Bump Package Version & Publish

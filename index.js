@@ -63,13 +63,12 @@ function checkCommitMessagesForKeyword (keywordList, commits, currentValue = 0, 
     }, currentValue)
 }
 
-function bumpVersion (commits, packageName) {
+function bumpVersion (commits, packageName, preRelease) {
     const majorKeywords = core.getInput('major-keywords').split(',')
     const minorKeywords = core.getInput('minor-keywords').split(',')
     const patchKeywords = core.getInput('patch-keywords').split(',')
-    const firstOnly = false //core.getBooleanInput('bump-first-only')
-    const resetLower = false // core.getBooleanInput('reset-lower')
-    const preRelease = core.getInput('pre-release')
+    const firstOnly = core.getBooleanInput('bump-first-only')
+    const resetLower = core.getBooleanInput('reset-lower')
     let [ majorStr, minorStr, patchStr, pre, preVersionStr ] = getCurrentVersion(packageName, preRelease)
 
     let newVersion = {
@@ -116,7 +115,7 @@ function bumpVersion (commits, packageName) {
     }
 
     if (preRelease) {
-        newVersion.packageVersion = `${newMajor}.${newMinor}.${newPatch}.${pre}.${preVersion + 1}`
+        newVersion.packageVersion = `${newMajor}.${newMinor}.${newPatch}-${preVersion + 1}.${pre}`
     } else {
         newVersion.packageVersion = newVersion.tagVersion
     }
@@ -157,7 +156,8 @@ function run () {
         : { commits: [] }
 
     core.notice('Checking commits for bump keywords and getting new version string.')
-    const newVersion = bumpVersion(commits, packageName)
+    const preRelease = core.getInput('pre-release')
+    const newVersion = bumpVersion(commits, packageName, preRelease)
 
     core.notice('Checking git tag settings.')
     tagVersion(newVersion.tagVersion)
@@ -169,6 +169,15 @@ function run () {
     execSync('npm publish')
 
     core.setOutput('new-version', newVersion.packageVersion)
+
+    if (!core.getBooleanInput('npm-dist-tag')) return
+    if (preRelease){
+        execSync(`npm dist-tag rm ${packageName}@${newVersion.packageVersion} next`)
+        execSync(`npm dist-tag add ${packageName}@${newVersion.packageVersion} next`)
+    } else {
+        execSync(`npm dist-tag rm ${packageName}@${newVersion.packageVersion} latest`)
+        execSync(`npm dist-tag add ${packageName}@${newVersion.packageVersion} latest`)
+    }
 }
 
 run()
