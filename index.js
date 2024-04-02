@@ -3,26 +3,50 @@ const { execSync } = require('child_process')
 const { writeFileSync, readFileSync } = require('fs')
 const { resolve  } = require('path')
 
-function getCurrentVersion (packageName){
+function getCurrentVersion (packageName, preRelease){
     // get complete list of versions
-    const versions =  JSON.parse(execSync(`npm view ${packageName} versions --json`, { encoding: 'utf8' }))
+    let versions =  JSON.parse(execSync(`npm view ${packageName} versions --json`, { encoding: 'utf8' }))
+    const preReleaseFormatted = preRelease.replace(/[^A-z]/g, '')
 
-    // sort by version number and ignore all pre-release versions
+    // if pre release we need to get only those versions
+    if (preRelease){
+        versions = versions
+            .filter(v => v.includes(preReleaseFormatted))
+            .map(v => v.replace(/-/g, '.')
+                .replace(preReleaseFormatted, '')
+                .replace('..', '.'))
+    } else {
+        versions = versions
+            .filter(v => v.split('.').length === 3)
+    }
+
+    // sort by version number
     const sorted = versions
-        .filter(a => a.split('.').length === 3)
-        .map( a => a.split('.')
-            .map( n => +n+100000 )
-            .join('.') )
+        .map(v => v.split('.')
+            .map(n => +n+100000)
+            .join('.'))
         .sort()
-        .map( a => a.split('.')
-            .map( n => +n-100000 )
-            .join('.') )
-
-    // return the least public version
-    // TODO might need to figure out a different way to handle this with pre-release
-    return sorted.length
+        .map(v => v.split('.')
+            .map(n => +n-100000)
+            .join('.'))
+    const selectedVersion = sorted.length
         ? sorted[sorted.length - 1]
-        : '0.0.0'
+        : execSync(`npm view ${packageName} version`, { encoding: 'utf8' })
+
+
+    if (preRelease){
+        const versionParts = selectedVersion.split('.').map(v => +v)
+
+        if (versionParts.length !== 4){
+            do {
+                versionParts.push(0)
+            } while (versionParts.length !== 4)
+        }
+
+        versionParts.splice(3, 0, preRelease)
+        return versionParts
+    }
+    return selectedVersion.split('.')
 }
 
 function checkCommitMessagesForKeyword (keywordList, commits, currentValue = 0, firstOnly = false) {
@@ -39,23 +63,22 @@ function checkCommitMessagesForKeyword (keywordList, commits, currentValue = 0, 
     }, currentValue)
 }
 
-function bumpVersion (commits, packageName) {
+function bumpVersion (commits, packageName, preRelease) {
     const majorKeywords = core.getInput('major-keywords').split(',')
     const minorKeywords = core.getInput('minor-keywords').split(',')
     const patchKeywords = core.getInput('patch-keywords').split(',')
     const firstOnly = core.getBooleanInput('bump-first-only')
     const resetLower = core.getBooleanInput('reset-lower')
-    const preRelease = core.getInput('pre-release')
-    const currentVersion = getCurrentVersion(packageName)
+    let [ majorStr, minorStr, patchStr, pre, preVersionStr ] = getCurrentVersion(packageName, preRelease)
 
     let newVersion = {
         packageVersion: '',
         tagVersion: '',
     }
-    let [ majorStr, minorStr, patchStr ] = currentVersion.split('.')
     const major = parseInt(majorStr) || 0
     const minor = parseInt(minorStr) || 0
     const patch = parseInt(patchStr) || 0
+    const preVersion = parseInt(preVersionStr)
 
     const newMajor = checkCommitMessagesForKeyword(majorKeywords, commits, major, firstOnly)
     const majorBumped = major !== newMajor
@@ -92,7 +115,7 @@ function bumpVersion (commits, packageName) {
     }
 
     if (preRelease) {
-        newVersion.packageVersion = `${newVersion.tagVersion}.${preRelease.toLowerCase()}`
+        newVersion.packageVersion = `${newMajor}.${newMinor}.${newPatch}-${preVersion + 1}.${pre}`
     } else {
         newVersion.packageVersion = newVersion.tagVersion
     }
@@ -133,7 +156,8 @@ function run () {
         : { commits: [] }
 
     core.notice('Checking commits for bump keywords and getting new version string.')
-    const newVersion = bumpVersion(commits, packageName)
+    const preRelease = core.getInput('pre-release')
+    const newVersion = bumpVersion(commits, packageName, preRelease)
 
     core.notice('Checking git tag settings.')
     tagVersion(newVersion.tagVersion)
@@ -145,6 +169,15 @@ function run () {
     execSync('npm publish')
 
     core.setOutput('new-version', newVersion.packageVersion)
+
+    if (!core.getBooleanInput('npm-dist-tag')) return
+    if (preRelease){
+        execSync(`npm dist-tag rm ${packageName}@${newVersion.packageVersion} next`)
+        execSync(`npm dist-tag add ${packageName}@${newVersion.packageVersion} next`)
+    } else {
+        execSync(`npm dist-tag rm ${packageName}@${newVersion.packageVersion} latest`)
+        execSync(`npm dist-tag add ${packageName}@${newVersion.packageVersion} latest`)
+    }
 }
 
 run()
