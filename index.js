@@ -31,7 +31,7 @@ function getCurrentVersion (packageName, preRelease){
             .join('.'))
     const selectedVersion = sorted.length
         ? sorted[sorted.length - 1]
-        : execSync(`npm view ${packageName} version`, { encoding: 'utf8' })
+        : '0.0.0'
 
 
     if (preRelease){
@@ -41,12 +41,17 @@ function getCurrentVersion (packageName, preRelease){
             do {
                 versionParts.push(0)
             } while (versionParts.length !== 4)
+        } else {
+            versionParts[3] = versionParts[3] + 1
         }
 
         versionParts.splice(3, 0, preRelease)
-        return versionParts
+        return versionParts.join('.')
+            .replace('..', '') // in case preRelease has decimals
+            .replace('.-', '-') // in case preRelease starts with -
+            .replace('-.', '-') // in case preRelease end with -
     }
-    return selectedVersion.split('.')
+    return selectedVersion
 }
 
 function checkCommitMessagesForKeyword (keywordList, commits, currentValue = 0, firstOnly = false) {
@@ -67,19 +72,19 @@ function bumpVersion (commits, packageName) {
     const majorKeywords = core.getInput('major-keywords').split(',')
     const minorKeywords = core.getInput('minor-keywords').split(',')
     const patchKeywords = core.getInput('patch-keywords').split(',')
-    const firstOnly = false //core.getBooleanInput('bump-first-only')
-    const resetLower = false // core.getBooleanInput('reset-lower')
+    const firstOnly = core.getBooleanInput('bump-first-only')
+    const resetLower = core.getBooleanInput('reset-lower')
     const preRelease = core.getInput('pre-release')
-    let [ majorStr, minorStr, patchStr, pre, preVersionStr ] = getCurrentVersion(packageName, preRelease)
+    const currentVersion = getCurrentVersion(packageName, preRelease)
 
     let newVersion = {
         packageVersion: '',
         tagVersion: '',
     }
+    let [ majorStr, minorStr, patchStr ] = currentVersion.split('.')
     const major = parseInt(majorStr) || 0
     const minor = parseInt(minorStr) || 0
     const patch = parseInt(patchStr) || 0
-    const preVersion = parseInt(preVersionStr)
 
     const newMajor = checkCommitMessagesForKeyword(majorKeywords, commits, major, firstOnly)
     const majorBumped = major !== newMajor
@@ -116,7 +121,7 @@ function bumpVersion (commits, packageName) {
     }
 
     if (preRelease) {
-        newVersion.packageVersion = `${newMajor}.${newMinor}.${newPatch}.${pre}.${preVersion + 1}`
+        newVersion.packageVersion = `${newVersion.tagVersion}.${preRelease.toLowerCase()}`
     } else {
         newVersion.packageVersion = newVersion.tagVersion
     }
