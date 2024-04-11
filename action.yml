@@ -40,10 +40,6 @@ inputs:
     description: 'Sets the working directory if build needs to be done in a sub folder.'
     default: ''
     required: false
-  npm-dist-tag:
-    description: 'If true, pre release tags will be set to @next and non pre release tags will be set to @latest'
-    default: 'false'
-    required: false
 outputs:
   newVersion:
     description: 'The new version of the npm package.'
