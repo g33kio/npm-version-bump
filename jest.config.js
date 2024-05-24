@@ -10,6 +10,7 @@ const config = {
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',
   resetMocks: false,
+  setupFiles: ['<rootDir>/jestSetup.js'],
   testMatch: [
     '**/__tests__/**/*.js?(x)',
     '**/?(*.)+(spec|test).js?(x)',
