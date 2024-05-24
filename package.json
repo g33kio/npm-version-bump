@@ -2,11 +2,12 @@
   "name": "npm-version-bump",
   "version": "0.0.1",
   "description": "Automatically bumps the version of the package based on what is in NPM and commit messages.",
-  "main": "index.js",
+  "main": "dist/index.js",
   "type": "commonjs",
   "scripts": {
     "test": "jest",
-    "lint": "eslint . --ext .js,.cjs,.mjs --fix --ignore-path .gitignore"
+    "lint": "eslint . --ext .js,.cjs,.mjs --fix --ignore-path .gitignore",
+    "build": "npm run lint && npm run test && esbuild index.js --bundle --platform=node --outfile=dist/index.js"
   },
   "keywords": [],
   "author": "Mark Lewis <mark@g33k.io>",

@@ -51,4 +51,4 @@ outputs:
     description: 'The new git version tag. Will be empty if tag-version is false.'
 runs:
   using: 'node20'
-  main: 'index.js'
+  main: 'dist/index.js'
