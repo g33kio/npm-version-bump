@@ -2,8 +2,8 @@ const core = require('@actions/core')
 const { execSync } = require('child_process')
 const { writeFileSync, readFileSync } = require('fs')
 const { resolve  } = require('path')
-const bumpVersion = require('utils/bumpVersion')
-const tagVersion  = require('utils/tagVersion')
+const bumpVersion = require('./utils/bumpVersion')
+const tagVersion  = require('./utils/tagVersion')
 
 function run() {
   const workingDirectory = core.getInput('working-dir')
